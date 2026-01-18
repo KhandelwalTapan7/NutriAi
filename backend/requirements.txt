@@ -4,6 +4,9 @@ gunicorn==20.1.0
 python-dotenv==1.0.0
 setuptools==69.0.2
 wheel==0.42.0
+numpy>=2.1.0
+pandas>=2.2.0
+scipy>=1.14.0
 # Remove numpy, pandas for now (they cause Python 3.13 issues)
 # numpy==1.24.3  # REMOVE THIS LINE
 # pandas==2.0.3  # REMOVE THIS LINE
