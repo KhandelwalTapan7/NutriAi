@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: nutriai-fullstack
+    env: python
+    region: singapore
+    plan: free
+    buildCommand: |
+      echo "🚀 Building NutriAI Full Stack Application..."
+      pip install -r requirements.txt
+      echo "✅ Dependencies installed successfully!"
+    startCommand: |
+      echo "🌟 Starting NutriAI Full Stack Application..."
+      gunicorn --bind 0.0.0.0:$PORT app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.18
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+    healthCheckPath: /api/health
+    autoDeploy: true

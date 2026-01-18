@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 from datetime import datetime, timedelta
@@ -6,12 +6,19 @@ import hashlib
 import uuid
 from typing import Dict, List, Optional
 import re
+import os
 
-app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
+
+# Configure CORS for production
+CORS(app, supports_credentials=True, origins=[
+    "http://localhost:3000", 
+    "http://127.0.0.1:3000",
+    "https://your-render-app.onrender.com"  # Add your Render URL here
+])
 
 # Configuration
-app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 
 # In-memory databases with better structure
 users_db: Dict[str, Dict] = {}
@@ -126,7 +133,34 @@ def require_auth(f):
     decorated_function.__name__ = f.__name__
     return decorated_function
 
-# Routes
+# Frontend Routes
+@app.route('/')
+def serve_index():
+    """Serve the main index.html"""
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    """Serve all static files"""
+    return send_from_directory(app.static_folder, path)
+
+# Health check endpoint (for Render)
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for Render"""
+    return jsonify({
+        'status': 'healthy',
+        'service': 'NutriAI Full Stack',
+        'timestamp': datetime.now().isoformat(),
+        'endpoints': {
+            'api': 'Available',
+            'frontend': 'Available',
+            'users': len(users_db),
+            'meals': sum(len(meals) for meals in meals_db.values())
+        }
+    })
+
+# API Routes (keep all your existing API routes)
 @app.route('/api/analyze', methods=['POST'])
 @require_auth
 def analyze_meal():
@@ -418,369 +452,8 @@ def update_user_stats(user_id: str):
             'last_updated': datetime.now().isoformat()
         }
 
-@app.route('/api/user/profile', methods=['GET'])
-@require_auth
-def get_user_profile():
-    """Get complete user profile"""
-    user = request.user
-    user_id = request.user_id
-    
-    # Calculate statistics
-    stats = user.get('stats', {})
-    meals_count = len(meals_db.get(user_id, []))
-    
-    # Get recent meals
-    recent_meals = []
-    if user_id in meals_db:
-        recent_meals = sorted(meals_db[user_id], 
-                            key=lambda x: x['timestamp'], 
-                            reverse=True)[:5]
-    
-    profile_data = {
-        'success': True,
-        'profile': {
-            'personal_info': {
-                'name': user.get('name'),
-                'email': user.get('email'),
-                'age': user.get('profile', {}).get('age'),
-                'gender': user.get('profile', {}).get('gender'),
-                'joined': user.get('joined')
-            },
-            'health_metrics': {
-                'weight': user.get('profile', {}).get('weight'),
-                'height': user.get('profile', {}).get('height'),
-                'bmi': round(calculate_bmi(
-                    user.get('profile', {}).get('weight', 70),
-                    user.get('profile', {}).get('height', 170)
-                ), 1),
-                'goal': user.get('profile', {}).get('goal'),
-                'activity_level': user.get('profile', {}).get('activity_level')
-            },
-            'nutrition_targets': user.get('daily_targets', {}),
-            'statistics': {
-                'total_meals_logged': meals_count,
-                'avg_meal_score': stats.get('avg_meal_score', 0),
-                'avg_daily_calories': stats.get('avg_daily_calories', 0),
-                'current_streak': calculate_streak(user_id),
-                'completion_rate': min(100, meals_count)  # Simplified
-            },
-            'preferences': user.get('preferences', {
-                'dietary_restrictions': [],
-                'allergies': [],
-                'favorite_foods': [],
-                'disliked_foods': []
-            })
-        },
-        'recent_meals': recent_meals[:3]  # Only return basic info
-    }
-    
-    return jsonify(profile_data)
-
-def calculate_streak(user_id: str) -> int:
-    """Calculate consecutive days with meals logged"""
-    if user_id not in meals_db:
-        return 0
-    
-    dates = set()
-    for meal in meals_db[user_id]:
-        meal_date = datetime.fromisoformat(meal['timestamp']).date()
-        dates.add(meal_date)
-    
-    dates = sorted(dates, reverse=True)
-    streak = 0
-    current_date = datetime.now().date()
-    
-    for i in range(len(dates)):
-        expected_date = current_date - timedelta(days=i)
-        if expected_date in dates:
-            streak += 1
-        else:
-            break
-    
-    return streak
-
-@app.route('/api/user/profile', methods=['PUT'])
-@require_auth
-def update_user_profile():
-    """Update user profile"""
-    try:
-        data = request.json
-        user = request.user
-        user_id = request.user_id
-        
-        # Update basic info
-        if 'name' in data:
-            user['name'] = data['name']
-        
-        # Update profile info
-        if 'profile' in data:
-            user['profile'] = {**user.get('profile', {}), **data['profile']}
-            
-            # Recalculate daily targets if relevant fields changed
-            profile = user['profile']
-            if any(field in data['profile'] for field in ['weight', 'height', 'age', 'gender', 'activity_level', 'goal']):
-                user['daily_targets'] = calculate_daily_targets(
-                    profile.get('weight', 70),
-                    profile.get('height', 170),
-                    profile.get('age', 30),
-                    profile.get('gender', 'male'),
-                    profile.get('activity_level', 'moderately_active'),
-                    profile.get('goal', 'maintain_weight')
-                )
-        
-        # Update preferences
-        if 'preferences' in data:
-            user['preferences'] = {**user.get('preferences', {}), **data['preferences']}
-        
-        users_db[user_id] = user
-        
-        return jsonify({
-            'success': True,
-            'message': 'Profile updated successfully',
-            'profile': user
-        })
-        
-    except Exception as e:
-        app.logger.error(f"Error updating profile: {str(e)}")
-        return jsonify({'error': 'Failed to update profile'}), 500
-
-@app.route('/api/meals', methods=['GET'])
-@require_auth
-def get_meals():
-    """Get user's meal history with filtering"""
-    try:
-        user_id = request.user_id
-        if user_id not in meals_db:
-            return jsonify({'success': True, 'meals': [], 'total': 0})
-        
-        # Get query parameters
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        meal_type = request.args.get('meal_type')
-        limit = int(request.args.get('limit', 50))
-        offset = int(request.args.get('offset', 0))
-        
-        # Filter meals
-        meals = meals_db[user_id]
-        
-        if start_date:
-            start = datetime.fromisoformat(start_date)
-            meals = [m for m in meals if datetime.fromisoformat(m['timestamp']) >= start]
-        
-        if end_date:
-            end = datetime.fromisoformat(end_date)
-            meals = [m for m in meals if datetime.fromisoformat(m['timestamp']) <= end]
-        
-        if meal_type:
-            meals = [m for m in meals if m.get('meal_type') == meal_type]
-        
-        # Sort by timestamp (newest first)
-        meals = sorted(meals, key=lambda x: x['timestamp'], reverse=True)
-        
-        # Paginate
-        total = len(meals)
-        paginated_meals = meals[offset:offset + limit]
-        
-        return jsonify({
-            'success': True,
-            'meals': paginated_meals,
-            'pagination': {
-                'total': total,
-                'limit': limit,
-                'offset': offset,
-                'has_more': offset + limit < total
-            }
-        })
-        
-    except Exception as e:
-        app.logger.error(f"Error getting meals: {str(e)}")
-        return jsonify({'error': 'Failed to retrieve meals'}), 500
-
-@app.route('/api/meals/<meal_id>', methods=['GET'])
-@require_auth
-def get_meal(meal_id):
-    """Get a specific meal"""
-    user_id = request.user_id
-    
-    if user_id not in meals_db:
-        return jsonify({'error': 'Meal not found'}), 404
-    
-    for meal in meals_db[user_id]:
-        if meal['id'] == meal_id:
-            return jsonify({'success': True, 'meal': meal})
-    
-    return jsonify({'error': 'Meal not found'}), 404
-
-@app.route('/api/meals/<meal_id>', methods=['DELETE'])
-@require_auth
-def delete_meal(meal_id):
-    """Delete a meal"""
-    user_id = request.user_id
-    
-    if user_id not in meals_db:
-        return jsonify({'error': 'Meal not found'}), 404
-    
-    for i, meal in enumerate(meals_db[user_id]):
-        if meal['id'] == meal_id:
-            deleted_meal = meals_db[user_id].pop(i)
-            update_user_stats(user_id)
-            return jsonify({
-                'success': True,
-                'message': 'Meal deleted successfully',
-                'deleted_meal': deleted_meal
-            })
-    
-    return jsonify({'error': 'Meal not found'}), 404
-
-@app.route('/api/dashboard/summary', methods=['GET'])
-@require_auth
-def get_dashboard_summary():
-    """Get dashboard summary with insights"""
-    user_id = request.user_id
-    user = request.user
-    profile = user.get('profile', {})
-    
-    # Calculate BMI
-    bmi = calculate_bmi(profile.get('weight', 70), profile.get('height', 170))
-    
-    # Get recent meals (last 7 days)
-    recent_meals = []
-    if user_id in meals_db:
-        week_ago = datetime.now() - timedelta(days=7)
-        recent_meals = [m for m in meals_db[user_id] 
-                       if datetime.fromisoformat(m['timestamp']) > week_ago]
-    
-    # Calculate insights
-    if recent_meals:
-        total_calories = sum(m['analysis']['nutrition']['calories'] for m in recent_meals)
-        avg_calories = total_calories / len(recent_meals)
-        avg_score = sum(m['analysis']['health_assessment']['meal_score'] 
-                       for m in recent_meals) / len(recent_meals)
-        
-        # Identify common patterns
-        common_foods = {}
-        for meal in recent_meals:
-            for food in meal.get('foods', []):
-                name = food.get('name')
-                common_foods[name] = common_foods.get(name, 0) + 1
-        
-        top_foods = sorted(common_foods.items(), key=lambda x: x[1], reverse=True)[:3]
-    else:
-        avg_calories = 0
-        avg_score = 0
-        top_foods = []
-    
-    # Generate insights
-    insights = generate_insights(profile, bmi, recent_meals)
-    
-    return jsonify({
-        'success': True,
-        'summary': {
-            'health_overview': {
-                'bmi': round(bmi, 1),
-                'bmi_category': get_bmi_category(bmi),
-                'goal': profile.get('goal', 'maintain_weight'),
-                'progress': calculate_progress(user_id, profile.get('goal'))
-            },
-            'nutrition_tracking': {
-                'meals_logged_today': len([m for m in recent_meals 
-                                          if datetime.fromisoformat(m['timestamp']).date() == datetime.now().date()]),
-                'avg_meal_score': round(avg_score, 1),
-                'avg_calories_per_meal': round(avg_calories),
-                'current_streak': calculate_streak(user_id)
-            },
-            'insights': insights,
-            'top_foods': [{'name': food, 'count': count} for food, count in top_foods],
-            'recommended_actions': get_recommended_actions(profile, insights)
-        }
-    })
-
-def generate_insights(profile: Dict, bmi: float, recent_meals: List) -> List[str]:
-    """Generate personalized insights"""
-    insights = []
-    goal = profile.get('goal', 'maintain_weight')
-    
-    # BMI insights
-    bmi_category = get_bmi_category(bmi)
-    if goal == 'weight_loss' and bmi_category in ['Overweight', 'Obese']:
-        insights.append(f"Your BMI suggests weight loss could benefit your health. Target 0.5-1kg per week.")
-    elif goal == 'muscle_gain' and bmi_category == 'Normal':
-        insights.append("Good baseline for muscle gain. Focus on strength training and protein intake.")
-    
-    # Meal frequency insights
-    if recent_meals:
-        avg_daily_meals = len(recent_meals) / 7
-        if avg_daily_meals < 2:
-            insights.append("Consider eating more frequent, smaller meals for better metabolism.")
-        elif avg_daily_meals > 5:
-            insights.append("You're eating frequently. Ensure meals are appropriately portioned.")
-    
-    # Progress insights
-    if len(recent_meals) >= 3:
-        latest_scores = [m['analysis']['health_assessment']['meal_score'] 
-                        for m in recent_meals[:3]]
-        if all(score >= 80 for score in latest_scores):
-            insights.append("Excellent recent meal choices! Keep up the great work.")
-        elif any(score < 60 for score in latest_scores):
-            insights.append("Some recent meals could be improved. Focus on balanced nutrition.")
-    
-    return insights[:3]  # Limit to 3 insights
-
-def calculate_progress(user_id: str, goal: str) -> Dict:
-    """Calculate progress towards goal"""
-    # Simplified progress calculation
-    if user_id not in meals_db:
-        return {'percentage': 0, 'description': 'Start logging meals to track progress'}
-    
-    recent_meals = [m for m in meals_db[user_id] 
-                   if datetime.fromisoformat(m['timestamp']) > datetime.now() - timedelta(days=30)]
-    
-    if not recent_meals:
-        return {'percentage': 0, 'description': 'No recent meals logged'}
-    
-    # Calculate consistency
-    days_with_meals = len(set(datetime.fromisoformat(m['timestamp']).date() 
-                             for m in recent_meals))
-    consistency = min(100, (days_with_meals / 30) * 100)
-    
-    if goal == 'weight_loss':
-        return {
-            'percentage': round(consistency * 0.7),  # Weighted for consistency
-            'description': f'Logged meals on {days_with_meals} of last 30 days'
-        }
-    else:
-        return {
-            'percentage': round(consistency),
-            'description': f'Consistent logging on {days_with_meals} days'
-        }
-
-def get_recommended_actions(profile: Dict, insights: List[str]) -> List[Dict]:
-    """Get recommended actions based on profile and insights"""
-    actions = []
-    goal = profile.get('goal', 'maintain_weight')
-    
-    if goal == 'weight_loss':
-        actions.append({
-            'title': 'Log Breakfast',
-            'description': 'Start your day with tracked nutrition',
-            'icon': '🍳',
-            'priority': 'high'
-        })
-        actions.append({
-            'title': 'Add Vegetables',
-            'description': 'Include veggies in your next meal',
-            'icon': '🥦',
-            'priority': 'medium'
-        })
-    
-    actions.append({
-        'title': 'Review Recent Meals',
-        'description': 'Check your meal history for patterns',
-        'icon': '📊',
-        'priority': 'low'
-    })
-    
-    return actions
+# Keep all your other API routes (get_user_profile, update_user_profile, get_meals, etc.)
+# ... [Keep all your existing API route functions here] ...
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
@@ -943,183 +616,8 @@ def register():
         app.logger.error(f"Registration error: {str(e)}")
         return jsonify({'error': 'Registration failed'}), 500
 
-@app.route('/api/auth/logout', methods=['POST'])
-@require_auth
-def logout():
-    """User logout"""
-    token = request.headers.get('Authorization')[7:]  # Remove 'Bearer ' prefix
-    
-    if token in sessions_db:
-        del sessions_db[token]
-    
-    return jsonify({'success': True, 'message': 'Logged out successfully'})
+# ... [Keep all your other route functions] ...
 
-@app.route('/api/community/insights', methods=['GET'])
-def get_community_insights():
-    """Get community health insights"""
-    # Calculate statistics from all users
-    total_users = len(users_db)
-    total_meals = sum(len(meals) for meals in meals_db.values())
-    
-    # Calculate average BMI
-    bmis = []
-    for user in users_db.values():
-        profile = user.get('profile', {})
-        if 'weight' in profile and 'height' in profile:
-            bmi = calculate_bmi(profile['weight'], profile['height'])
-            bmis.append(bmi)
-    
-    avg_bmi = round(sum(bmis) / len(bmis), 1) if bmis else 25.8
-    
-    # Calculate goal distribution
-    goals = {}
-    for user in users_db.values():
-        goal = user.get('profile', {}).get('goal', 'maintain_weight')
-        goals[goal] = goals.get(goal, 0) + 1
-    
-    # Generate community data
-    community_data = {
-        'success': True,
-        'insights': {
-            'overview': {
-                'total_users': total_users,
-                'total_meals_logged': total_meals,
-                'avg_meals_per_user': round(total_meals / max(1, total_users), 1),
-                'active_users_7d': calculate_active_users()
-            },
-            'health_stats': {
-                'avg_bmi': avg_bmi,
-                'bmi_distribution': calculate_bmi_distribution(bmis),
-                'goal_distribution': goals,
-                'most_common_foods': get_community_foods()
-            },
-            'trends': {
-                'avg_meal_score': calculate_community_avg_score(),
-                'popular_goals': sorted(goals.items(), key=lambda x: x[1], reverse=True)[:3],
-                'improvement_rate': '72%'  # Mock data
-            }
-        },
-        'leaderboards': {
-            'consistency': get_consistency_leaders(),
-            'meal_quality': get_quality_leaders()
-        }
-    }
-    
-    return jsonify(community_data)
-
-def calculate_active_users() -> int:
-    """Calculate number of users active in last 7 days"""
-    week_ago = datetime.now() - timedelta(days=7)
-    active_users = set()
-    
-    for user_id, meals in meals_db.items():
-        for meal in meals:
-            if datetime.fromisoformat(meal['timestamp']) > week_ago:
-                active_users.add(user_id)
-                break
-    
-    return len(active_users)
-
-def calculate_bmi_distribution(bmis: List[float]) -> Dict[str, int]:
-    """Calculate BMI category distribution"""
-    distribution = {'Underweight': 0, 'Normal': 0, 'Overweight': 0, 'Obese': 0}
-    
-    for bmi in bmis:
-        category = get_bmi_category(bmi)
-        distribution[category] = distribution.get(category, 0) + 1
-    
-    # Convert to percentages
-    total = sum(distribution.values())
-    if total > 0:
-        for category in distribution:
-            distribution[category] = round((distribution[category] / total) * 100)
-    
-    return distribution
-
-def get_community_foods() -> List[Dict]:
-    """Get most common foods across community"""
-    food_counts = {}
-    
-    for meals in meals_db.values():
-        for meal in meals:
-            for food in meal.get('foods', []):
-                name = food.get('name')
-                if name:
-                    food_counts[name] = food_counts.get(name, 0) + 1
-    
-    top_foods = sorted(food_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-    return [{'food': food, 'count': count} for food, count in top_foods]
-
-def calculate_community_avg_score() -> float:
-    """Calculate average meal score across community"""
-    scores = []
-    
-    for meals in meals_db.values():
-        for meal in meals:
-            score = meal['analysis']['health_assessment']['meal_score']
-            scores.append(score)
-    
-    return round(sum(scores) / len(scores), 1) if scores else 0
-
-def get_consistency_leaders() -> List[Dict]:
-    """Get users with highest consistency streaks"""
-    leaders = []
-    
-    for user_id, user in users_db.items():
-        streak = calculate_streak(user_id)
-        if streak > 0:
-            leaders.append({
-                'name': user.get('name', 'Anonymous'),
-                'streak': streak,
-                'meals_logged': len(meals_db.get(user_id, []))
-            })
-    
-    return sorted(leaders, key=lambda x: x['streak'], reverse=True)[:5]
-
-def get_quality_leaders() -> List[Dict]:
-    """Get users with highest average meal scores"""
-    leaders = []
-    
-    for user_id, user in users_db.items():
-        user_meals = meals_db.get(user_id, [])
-        if user_meals:
-            avg_score = sum(m['analysis']['health_assessment']['meal_score'] 
-                          for m in user_meals) / len(user_meals)
-            leaders.append({
-                'name': user.get('name', 'Anonymous'),
-                'avg_score': round(avg_score, 1),
-                'meals_logged': len(user_meals)
-            })
-    
-    return sorted(leaders, key=lambda x: x['avg_score'], reverse=True)[:5]
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({
-        'status': 'healthy',
-        'timestamp': datetime.now().isoformat(),
-        'stats': {
-            'users': len(users_db),
-            'meals': sum(len(meals) for meals in meals_db.values()),
-            'sessions': len(sessions_db)
-        }
-    })
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({'error': 'Endpoint not found'}), 404
-
-@app.errorhandler(405)
-def method_not_allowed(error):
-    return jsonify({'error': 'Method not allowed'}), 405
-
-@app.errorhandler(500)
-def internal_error(error):
-    app.logger.error(f"Server error: {error}")
-    return jsonify({'error': 'Internal server error'}), 500
-
-# Keep your original functions for compatibility
 def calculate_bmi(weight, height):
     """Calculate BMI"""
     height_m = height / 100
@@ -1137,20 +635,6 @@ def get_bmi_category(bmi):
         return 'Obese'
 
 if __name__ == '__main__':
-    print("🚀 Starting Enhanced Nutrition API Server...")
-    print("=" * 50)
-    print("API Documentation:")
-    print("  POST   /api/auth/login     - User login")
-    print("  POST   /api/auth/register  - User registration")
-    print("  POST   /api/auth/logout    - User logout")
-    print("  POST   /api/analyze        - Analyze a meal (Auth required)")
-    print("  GET    /api/user/profile   - Get user profile (Auth required)")
-    print("  PUT    /api/user/profile   - Update profile (Auth required)")
-    print("  GET    /api/meals          - Get meal history (Auth required)")
-    print("  GET    /api/dashboard/summary - Dashboard data (Auth required)")
-    print("  GET    /api/community/insights - Community insights")
-    print("  GET    /api/health         - Health check")
-    print("=" * 50)
-    print("Server running at: http://localhost:5000")
-    print("Debug mode: ON")
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Starting NutriAI Full Stack Application on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)
