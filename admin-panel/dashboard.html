@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - NutriAI</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-apple-alt"></i>
+                <h1>NutriAI</h1>
+            </div>
+            <div class="nav-links">
+                <a href="../index.html"><i class="fas fa-home"></i> Home</a>
+                <a href="dashboard.html" class="active"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="nutrition.html"><i class="fas fa-utensils"></i> Nutrition</a>
+                <a href="community.html"><i class="fas fa-users"></i> Community</a>
+                <a href="login.html"><i class="fas fa-user"></i> Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="dashboard">
+        <div class="container">
+            <h2>Personal Health Dashboard</h2>
+            
+            <!-- User Info -->
+            <div class="user-info">
+                <h3>Welcome, <span id="user-name">User</span></h3>
+                <div class="user-stats">
+                    <p>Age: <span id="user-age">30</span></p>
+                    <p>BMI: <span id="user-bmi">24.5</span></p>
+                    <p>Health Score: <span id="health-score">85</span>/100</p>
+                </div>
+            </div>
+            
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-fire" style="color: #e74c3c;"></i>
+                    <h3 id="total-calories">2150</h3>
+                    <p>Avg Daily Calories</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-utensils" style="color: #3498db;"></i>
+                    <h3 id="meals-logged">21</h3>
+                    <p>Meals Logged (7 days)</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-heart" style="color: #2ecc71;"></i>
+                    <h3>Low</h3>
+                    <p>Health Risk Level</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-trophy" style="color: #f39c12;"></i>
+                    <h3>7 day</h3>
+                    <p>Consistency Streak</p>
+                </div>
+            </div>
+            
+            <!-- Charts -->
+            <div class="chart-container">
+                <canvas id="nutritionChart"></canvas>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="chart-container">
+                <h3>Recent Activity</h3>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <i class="fas fa-check-circle" style="color: #2ecc71;"></i>
+                        <span>Today: Logged breakfast (320 calories)</span>
+                    </div>
+                    <div class="activity-item">
+                        <i class="fas fa-bullseye" style="color: #3498db;"></i>
+                        <span>Yesterday: Met protein target (95g)</span>
+                    </div>
+                    <div class="activity-item">
+                        <i class="fas fa-chart-line" style="color: #9b59b6;"></i>
+                        <span>Week Trend: -150 avg daily calories</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Recommendations -->
+            <div class="chart-container">
+                <h3>AI Recommendations</h3>
+                <div class="recommendations">
+                    <p>✅ Excellent fiber intake this week</p>
+                    <p>⚠️ Consider increasing water intake by 500ml daily</p>
+                    <p>📈 Good progress on weight management goals</p>
+                    <button onclick="window.location.href='nutrition.html'" class="btn-primary">
+                        View Detailed Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../script.js"></script>
+</body>
+</html>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutrition Analysis - NutriAI</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fas fa-apple-alt"></i>
+                <h1>NutriAI</h1>
+            </div>
+            <div class="nav-links">
+                <a href="../index.html"><i class="fas fa-home"></i> Home</a>
+                <a href="dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="nutrition.html" class="active"><i class="fas fa-utensils"></i> Nutrition</a>
+                <a href="community.html"><i class="fas fa-users"></i> Community</a>
+                <a href="login.html"><i class="fas fa-user"></i> Profile</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h2>Nutrition Analysis & Tracking</h2>
+        
+        <!-- Nutrition Overview -->
+        <div class="chart-container">
+            <h3>Today's Nutrition Overview</h3>
+            <div id="nutrition-overview">
+                <!-- Dynamically loaded -->
+            </div>
+        </div>
+        
+        <!-- Food Logging -->
+        <div class="chart-container">
+            <h3>Log Your Meal</h3>
+            <div class="food-logging">
+                <div class="food-input-group">
+                    <input type="text" id="meal-food" placeholder="Enter food item (e.g., apple, chicken breast)">
+                    <input type="number" id="meal-quantity" placeholder="Quantity" value="1" min="0.1" step="0.1">
+                    <select id="meal-type">
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="snack">Snack</option>
+                    </select>
+                    <button onclick="addMealItem()" class="btn-primary">
+                        <i class="fas fa-plus"></i> Add Food
+                    </button>
+                </div>
+                
+                <div id="current-meal" class="meal-list">
+                    <h4>Current Meal Items:</h4>
+                    <div id="meal-items-list"></div>
+                </div>
+                
+                <div class="meal-actions">
+                    <button onclick="analyzeCurrentMeal()" class="btn-analyze">
+                        <i class="fas fa-search"></i> Analyze Meal with AI
+                    </button>
+                    <button onclick="saveMeal()" class="btn-secondary">
+                        <i class="fas fa-save"></i> Save Meal Log
+                    </button>
+                    <button onclick="clearMeal()" class="btn-secondary">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Analysis Results -->
+        <div class="chart-container">
+            <h3>AI Nutrition Analysis</h3>
+            <div id="meal-analysis-results">
+                <p class="placeholder">Your meal analysis will appear here...</p>
+            </div>
+        </div>
+        
+        <!-- Nutrition History -->
+        <div class="chart-container">
+            <h3>Recent Meal History</h3>
+            <div class="history-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Meal</th>
+                            <th>Calories</th>
+                            <th>Protein</th>
+                            <th>Carbs</th>
+                            <th>Fats</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meal-history">
+                        <!-- Dynamically loaded -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Personalized Recommendations -->
+        <div class="chart-container">
+            <h3>Personalized Recommendations</h3>
+            <div class="recommendations-grid">
+                <div class="recommendation-card">
+                    <i class="fas fa-carrot" style="color: #e74c3c;"></i>
+                    <h4>Increase Vegetables</h4>
+                    <p>Add 2 more servings of vegetables daily for better fiber intake</p>
+                </div>
+                <div class="recommendation-card">
+                    <i class="fas fa-tint" style="color: #3498db;"></i>
+                    <h4>Hydration</h4>
+                    <p>Drink 500ml more water daily. Current: 1.5L, Target: 2L</p>
+                </div>
+                <div class="recommendation-card">
+                    <i class="fas fa-weight" style="color: #2ecc71;"></i>
+                    <h4>Protein Timing</h4>
+                    <p>Distribute protein intake evenly across meals for better absorption</p>
+                </div>
+                <div class="recommendation-card">
+                    <i class="fas fa-ban" style="color: #f39c12;"></i>
+                    <h4>Reduce Processed Foods</h4>
+                    <p>Limit processed foods to 1 serving per day maximum</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Meal Planning -->
+        <div class="chart-container">
+            <h3>AI-Generated Meal Plan</h3>
+            <div class="meal-plan">
+                <div class="meal-plan-day">
+                    <h4>Sample Day Plan</h4>
+                    <div class="meal-plan-item">
+                        <strong>Breakfast:</strong> Oatmeal with berries and nuts (320 cal, 15g protein)
+                    </div>
+                    <div class="meal-plan-item">
+                        <strong>Lunch:</strong> Grilled chicken salad (450 cal, 35g protein)
+                    </div>
+                    <div class="meal-plan-item">
+                        <strong>Dinner:</strong> Salmon with quinoa and vegetables (550 cal, 40g protein)
+                    </div>
+                    <div class="meal-plan-item">
+                        <strong>Snacks:</strong> Greek yogurt and apple (200 cal, 12g protein)
+                    </div>
+                    <div class="meal-plan-total">
+                        <strong>Total:</strong> 1520 calories, 102g protein
+                    </div>
+                </div>
+            </div>
+            <button onclick="generateMealPlan()" class="btn-primary">
+                <i class="fas fa-robot"></i> Generate New Meal Plan
+            </button>
+        </div>
+    </main>
+
+    <script>
+        let currentMealItems = [];
+        
+        function addMealItem() {
+            const foodInput = document.getElementById('meal-food');
+            const quantityInput = document.getElementById('meal-quantity');
+            const mealType = document.getElementById('meal-type').value;
+            
+            const foodName = foodInput.value.trim();
+            const quantity = parseFloat(quantityInput.value) || 1;
+            
+            if (!foodName) {
+                alert('Please enter a food item');
+                return;
+            }
+            
+            currentMealItems.push({
+                name: foodName,
+                quantity: quantity,
+                meal_type: mealType,
+                timestamp: new Date().toISOString()
+            });
+            
+            updateMealList();
+            
+            // Clear inputs
+            foodInput.value = '';
+            quantityInput.value = '1';
+            foodInput.focus();
+        }
+        
+        function updateMealList() {
+            const mealList = document.getElementById('meal-items-list');
+            mealList.innerHTML = '';
+            
+            if (currentMealItems.length === 0) {
+                mealList.innerHTML = '<p class="placeholder">No items added yet...</p>';
+                return;
+            }
+            
+            currentMealItems.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'meal-item';
+                itemDiv.innerHTML = `
+                    <span>${item.quantity}x ${item.name} (${item.meal_type})</span>
+                    <button onclick="removeMealItem(${index})" class="remove-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                mealList.appendChild(itemDiv);
+            });
+        }
+        
+        function removeMealItem(index) {
+            currentMealItems.splice(index, 1);
+            updateMealList();
+        }
+        
+        async function analyzeCurrentMeal() {
+            if (currentMealItems.length === 0) {
+                alert('Please add some food items first');
+                return;
+            }
+            
+            const analyzeBtn = document.querySelector('.btn-analyze');
+            const originalText = analyzeBtn.innerHTML;
+            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+            analyzeBtn.disabled = true;
+            
+            try {
+                // Prepare request data
+                const requestData = {
+                    food_items: currentMealItems,
+                    user_id: 'user1',
+                    age: 30,
+                    weight: 75,
+                    height: 175
+                };
+                
+                // Make API call
+                const response = await fetch('http://localhost:5000/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const data = await response.json();
+                displayMealAnalysis(data.analysis);
+                
+                // Add to history
+                addToMealHistory(currentMealItems, data.analysis);
+                
+            } catch (error) {
+                console.error('Error analyzing meal:', error);
+                alert('Failed to analyze meal. Using demo data.');
+                displayMockMealAnalysis();
+            } finally {
+                analyzeBtn.innerHTML = originalText;
+                analyzeBtn.disabled = false;
+            }
+        }
+        
+        function displayMealAnalysis(analysis) {
+            const resultsContainer = document.getElementById('meal-analysis-results');
+            
+            const riskClass = `risk-${analysis.health_risk.level.toLowerCase().split(' ')[0]}`;
+            
+            resultsContainer.innerHTML = `
+                <div class="analysis-summary">
+                    <div class="risk-indicator ${riskClass}">
+                        ${analysis.health_risk.level}
+                    </div>
+                    
+                    <div class="nutrient-breakdown">
+                        <h4>Nutrition Summary:</h4>
+                        <div class="nutrient-row">
+                            <span>Calories:</span>
+                            <span class="nutrient-value">${analysis.nutrition_analysis.calories.toFixed(0)}</span>
+                        </div>
+                        <div class="nutrient-row">
+                            <span>Protein:</span>
+                            <span class="nutrient-value">${analysis.nutrition_analysis.protein.toFixed(1)}g</span>
+                        </div>
+                        <div class="nutrient-row">
+                            <span>Carbs:</span>
+                            <span class="nutrient-value">${analysis.nutrition_analysis.carbs.toFixed(1)}g</span>
+                        </div>
+                        <div class="nutrient-row">
+                            <span>Fats:</span>
+                            <span class="nutrient-value">${analysis.nutrition_analysis.fats.toFixed(1)}g</span>
+                        </div>
+                        <div class="nutrient-row">
+                            <span>Fiber:</span>
+                            <span class="nutrient-value">${analysis.nutrition_analysis.fiber?.toFixed(1) || 'N/A'}g</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bmi-info">
+                        <strong>BMI Impact:</strong> ${analysis.bmi.value} (${analysis.bmi.category})
+                    </div>
+                    
+                    <div class="ai-recommendations">
+                        <h4>AI Recommendations:</h4>
+                        <ul>
+                            ${analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="health-risk-details">
+                        <p><strong>Risk Assessment:</strong> ${analysis.health_risk.details}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function displayMockMealAnalysis() {
+            const mockAnalysis = {
+                nutrition_analysis: {
+                    calories: 650,
+                    protein: 42,
+                    carbs: 75,
+                    fats: 22,
+                    fiber: 12
+                },
+                health_risk: {
+                    level: 'Low Risk',
+                    details: 'Well-balanced meal with good nutrient distribution'
+                },
+                bmi: {
+                    value: 24.5,
+                    category: 'Normal'
+                },
+                recommendations: [
+                    'Good protein amount for muscle maintenance',
+                    'Excellent fiber content from vegetables',
+                    'Consider adding healthy fats like avocado'
+                ]
+            };
+            
+            displayMealAnalysis(mockAnalysis);
+        }
+        
+        function addToMealHistory(mealItems, analysis) {
+            const mealHistory = document.getElementById('meal-history');
+            
+            // Get meal type (most common in current items)
+            const mealTypes = mealItems.map(item => item.meal_type);
+            const mostCommonMeal = mealTypes.sort((a,b) => 
+                mealTypes.filter(v => v===a).length - mealTypes.filter(v => v===b).length
+            ).pop();
+            
+            // Create history row
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${new Date().toLocaleDateString()}</td>
+                <td>${mostCommonMeal || 'Mixed'}</td>
+                <td>${analysis.nutrition_analysis.calories.toFixed(0)}</td>
+                <td>${analysis.nutrition_analysis.protein.toFixed(1)}g</td>
+                <td>${analysis.nutrition_analysis.carbs.toFixed(1)}g</td>
+                <td>${analysis.nutrition_analysis.fats.toFixed(1)}g</td>
+                <td><span class="risk-badge ${analysis.health_risk.level.toLowerCase().split(' ')[0]}">${analysis.health_risk.level}</span></td>
+            `;
+            
+            // Add to top of table
+            if (mealHistory.firstChild) {
+                mealHistory.insertBefore(row, mealHistory.firstChild);
+            } else {
+                mealHistory.appendChild(row);
+            }
+            
+            // Keep only last 5 entries
+            const rows = mealHistory.querySelectorAll('tr');
+            if (rows.length > 5) {
+                mealHistory.removeChild(rows[rows.length - 1]);
+            }
+        }
+        
+        function saveMeal() {
+            if (currentMealItems.length === 0) {
+                alert('No meal items to save');
+                return;
+            }
+            
+            // In a real app, this would save to backend
+            alert('Meal saved to your history!');
+            clearMeal();
+        }
+        
+        function clearMeal() {
+            currentMealItems = [];
+            updateMealList();
+            document.getElementById('meal-analysis-results').innerHTML = 
+                '<p class="placeholder">Your meal analysis will appear here...</p>';
+        }
+        
+        function generateMealPlan() {
+            // Mock meal plan generation
+            alert('New meal plan generated based on your nutritional needs!');
+            
+            // Update the displayed meal plan
+            const mealPlanDiv = document.querySelector('.meal-plan-day');
+            if (mealPlanDiv) {
+                mealPlanDiv.innerHTML = `
+                    <h4>New AI-Generated Plan</h4>
+                    <div class="meal-plan-item">
+                        <strong>Breakfast:</strong> Scrambled eggs with spinach (350 cal, 22g protein)
+                    </div>
+                    <div class="meal-plan-item">
+                        <strong>Lunch:</strong> Turkey wrap with whole wheat (420 cal, 28g protein)
+                    </div>
+                    <div class="meal-plan-item">
+                        <strong>Dinner:</strong> Lean beef stir-fry (480 cal, 36g protein)
+                    </div>
+                    <div class="meal-plan-item">
+                        <strong>Snacks:</strong> Protein shake and almonds (250 cal, 20g protein)
+                    </div>
+                    <div class="meal-plan-total">
+                        <strong>Total:</strong> 1500 calories, 106g protein
+                    </div>
+                `;
+            }
+        }
+        
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load mock history
+            loadMockHistory();
+            
+            // Add CSS for this page
+            const style = document.createElement('style');
+            style.textContent = `
+                .food-input-group {
+                    display: grid;
+                    grid-template-columns: 2fr 1fr 1fr 1fr;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                }
+                
+                .food-input-group input, 
+                .food-input-group select {
+                    padding: 10px;
+                    border: 2px solid #ddd;
+                    border-radius: 5px;
+                }
+                
+                .meal-list {
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin: 15px 0;
+                    min-height: 100px;
+                }
+                
+                .meal-item {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 12px;
+                    background: white;
+                    margin: 5px 0;
+                    border-radius: 5px;
+                    border-left: 4px solid #3498db;
+                }
+                
+                .remove-btn {
+                    background: none;
+                    border: none;
+                    color: #e74c3c;
+                    cursor: pointer;
+                }
+                
+                .meal-actions {
+                    display: flex;
+                    gap: 10px;
+                    margin-top: 20px;
+                }
+                
+                .history-table table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                
+                .history-table th, 
+                .history-table td {
+                    padding: 12px;
+                    text-align: left;
+                    border-bottom: 1px solid #ddd;
+                }
+                
+                .history-table th {
+                    background: #f8f9fa;
+                    font-weight: 600;
+                }
+                
+                .risk-badge {
+                    padding: 4px 8px;
+                    border-radius: 12px;
+                    font-size: 0.85em;
+                    font-weight: 600;
+                }
+                
+                .risk-badge.low {
+                    background: #d4edda;
+                    color: #155724;
+                }
+                
+                .risk-badge.medium {
+                    background: #fff3cd;
+                    color: #856404;
+                }
+                
+                .risk-badge.high {
+                    background: #f8d7da;
+                    color: #721c24;
+                }
+                
+                .recommendations-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                    gap: 20px;
+                    margin: 20px 0;
+                }
+                
+                .recommendation-card {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                    text-align: center;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                }
+                
+                .recommendation-card i {
+                    font-size: 2.5rem;
+                    margin-bottom: 15px;
+                }
+                
+                .meal-plan {
+                    background: #e8f4fc;
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin: 20px 0;
+                }
+                
+                .meal-plan-item {
+                    margin: 10px 0;
+                    padding: 10px;
+                    background: white;
+                    border-radius: 5px;
+                }
+                
+                .meal-plan-total {
+                    margin-top: 15px;
+                    padding-top: 15px;
+                    border-top: 2px solid #3498db;
+                    font-size: 1.1em;
+                }
+                
+                .analysis-summary {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 10px;
+                }
+                
+                .risk-indicator {
+                    display: inline-block;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-weight: bold;
+                    margin-bottom: 20px;
+                }
+                
+                .nutrient-row {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 8px 0;
+                    border-bottom: 1px solid #eee;
+                }
+                
+                .nutrient-value {
+                    font-weight: 600;
+                    color: #2c3e50;
+                }
+                
+                .ai-recommendations ul {
+                    padding-left: 20px;
+                    margin: 15px 0;
+                }
+                
+                .ai-recommendations li {
+                    margin: 8px 0;
+                }
+            `;
+            document.head.appendChild(style);
+        });
+        
+        function loadMockHistory() {
+            const mockHistory = [
+                { date: '2024-01-15', meal: 'Lunch', calories: 520, protein: 35, carbs: 45, fats: 18, risk: 'low' },
+                { date: '2024-01-14', meal: 'Dinner', calories: 680, protein: 42, carbs: 55, fats: 25, risk: 'medium' },
+                { date: '2024-01-14', meal: 'Breakfast', calories: 320, protein: 18, carbs: 35, fats: 12, risk: 'low' }
+            ];
+            
+            const mealHistory = document.getElementById('meal-history');
+            
+            mockHistory.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${new Date(entry.date).toLocaleDateString()}</td>
+                    <td>${entry.meal}</td>
+                    <td>${entry.calories}</td>
+                    <td>${entry.protein}g</td>
+                    <td>${entry.carbs}g</td>
+                    <td>${entry.fats}g</td>
+                    <td><span class="risk-badge ${entry.risk}">${entry.risk === 'low' ? 'Low Risk' : 'Medium Risk'}</span></td>
+                `;
+                mealHistory.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>

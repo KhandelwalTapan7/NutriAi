@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - NutriAI Research</title>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <h2>NutriAI Admin</h2>
+                <p>Research Dashboard</p>
+            </div>
+            
+            <nav class="admin-nav">
+                <a href="#dashboard" class="active">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#users">
+                    <i class="fas fa-users"></i> Users & Participants
+                </a>
+                <a href="#analytics">
+                    <i class="fas fa-chart-bar"></i> Analytics
+                </a>
+                <a href="#models">
+                    <i class="fas fa-robot"></i> AI Models
+                </a>
+                <a href="#data">
+                    <i class="fas fa-database"></i> Research Data
+                </a>
+                <a href="#ethics">
+                    <i class="fas fa-shield-alt"></i> Ethics & Compliance
+                </a>
+                <a href="#reports">
+                    <i class="fas fa-file-pdf"></i> Reports
+                </a>
+                <a href="#settings">
+                    <i class="fas fa-cog"></i> Settings
+                </a>
+            </nav>
+            
+            <div class="admin-info">
+                <div class="admin-status">
+                    <div class="status-indicator online"></div>
+                    <span>System Online</span>
+                </div>
+                <div class="data-update">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Last updated: <span id="last-update">Just now</span></span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <h1>Research Administration Panel</h1>
+                    <p>AI-Based Nutrition & Health Surveillance System</p>
+                </div>
+                <div class="header-right">
+                    <div class="user-menu">
+                        <img src="https://ui-avatars.com/api/?name=Researcher&background=3498db&color=fff" 
+                             alt="Admin" class="admin-avatar">
+                        <div class="user-info">
+                            <span class="user-name">Research Admin</span>
+                            <span class="user-role">PhD Researcher</span>
+                        </div>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <button class="btn-alert">
+                        <i class="fas fa-bell"></i>
+                        <span class="alert-count">3</span>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Dashboard -->
+            <section id="dashboard" class="dashboard-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Research Dashboard</h2>
+                    <div class="section-actions">
+                        <button class="btn-refresh" onclick="refreshData()">
+                            <i class="fas fa-redo"></i> Refresh Data
+                        </button>
+                        <button class="btn-export" onclick="exportDashboard()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #3498db;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-participants">1,500</h3>
+                            <p>Research Participants</p>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12% this month</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #2ecc71;">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="total-meals">45,280</h3>
+                            <p>Meals Analyzed</p>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8% daily</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #e74c3c;">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="avg-risk">Medium</h3>
+                            <p>Average Health Risk</p>
+                            <div class="stat-trend negative">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>-5% from baseline</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #f39c12;">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="model-accuracy">94.2%</h3>
+                            <p>AI Model Accuracy</p>
+                            <div class="stat-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2.3% improved</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts -->
+                <div class="charts-row">
+                    <div class="chart-container">
+                        <h3>Participation Growth</h3>
+                        <canvas id="participationChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Health Risk Distribution</h3>
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="activity-section">
+                    <h3>Recent Research Activity</h3>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-icon success">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>New participant enrolled</strong> in nutrition study</p>
+                                <span class="activity-time">2 minutes ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>AI model retrained</strong> with 95.1% accuracy</p>
+                                <span class="activity-time">15 minutes ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon info">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>Data export completed</strong> for monthly report</p>
+                                <span class="activity-time">1 hour ago</span>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-icon success">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="activity-content">
+                                <p><strong>Research paper submitted</strong> to journal</p>
+                                <span class="activity-time">3 hours ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Users Section -->
+            <section id="users" class="dashboard-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-users"></i> Research Participants</h2>
+                    <div class="section-actions">
+                        <div class="search-box">
+                            <input type="text" placeholder="Search participants..." id="user-search">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <button class="btn-primary" onclick="addParticipant()">
+                            <i class="fas fa-plus"></i> Add Participant
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="participants-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Age Group</th>
+                                <th>Region</th>
+                                <th>Health Score</th>
+                                <th>Risk Level</th>
+                                <th>Data Points</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="participants-list">
+                            <!-- Data loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="demographics-section">
+                    <h3>Demographic Distribution</h3>
+                    <div class="demo-charts">
+                        <div class="demo-chart">
+                            <canvas id="ageChart"></canvas>
+                        </div>
+                        <div class="demo-chart">
+                            <canvas id="regionChart"></canvas>
+                        </div>
+                        <div class="demo-chart">
+                            <canvas id="genderChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Analytics Section -->
+            <section id="analytics" class="dashboard-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-bar"></i> Advanced Analytics</h2>
+                    <div class="section-actions">
+                        <select id="analytics-period">
+                            <option value="7d">Last 7 days</option>
+                            <option value="30d" selected>Last 30 days</option>
+                            <option value="90d">Last 90 days</option>
+                            <option value="1y">Last year</option>
+                        </select>
+                        <button class="btn-primary" onclick="runAdvancedAnalysis()">
+                            <i class="fas fa-play"></i> Run Analysis
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Nutrition Trends</h3>
+                        <div class="analytics-chart">
+                            <canvas id="nutritionTrendsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Health Outcomes</h3>
+                        <div class="analytics-chart">
+                            <canvas id="healthOutcomesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Correlation Analysis</h3>
+                        <div class="analytics-chart">
+                            <canvas id="correlationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Predictive Insights</h3>
+                        <div class="insights-list" id="predictive-insights">
+                            <!-- Insights loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Models Section -->
+            <section id="models" class="dashboard-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-robot"></i> AI Model Management</h2>
+                    <div class="section-actions">
+                        <button class="btn-primary" onclick="trainNewModel()">
+                            <i class="fas fa-brain"></i> Train New Model
+                        </button>
+                        <button class="btn-secondary" onclick="evaluateModels()">
+                            <i class="fas fa-chart-line"></i> Evaluate All
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="models-overview">
+                    <div class="model-card">
+                        <div class="model-header">
+                            <h3>Nutrition Analyzer</h3>
+                            <span class="model-status active">Active</span>
+                        </div>
+                        <div class="model-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Accuracy</span>
+                                <span class="metric-value">94.2%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Precision</span>
+                                <span class="metric-value">92.8%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Recall</span>
+                                <span class="metric-value">93.5%</span>
+                            </div>
+                        </div>
+                        <div class="model-actions">
+                            <button class="btn-small" onclick="viewModelDetails('nutrition')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn-small" onclick="retrainModel('nutrition')">
+                                <i class="fas fa-sync"></i> Retrain
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card">
+                        <div class="model-header">
+                            <h3>Health Risk Predictor</h3>
+                            <span class="model-status active">Active</span>
+                        </div>
+                        <div class="model-metrics">
+                            <div class="metric">
+                                <span class="metric-label">AUC Score</span>
+                                <span class="metric-value">0.91</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">F1 Score</span>
+                                <span class="metric-value">89.3%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Specificity</span>
+                                <span class="metric-value">92.1%</span>
+                            </div>
+                        </div>
+                        <div class="model-actions">
+                            <button class="btn-small" onclick="viewModelDetails('risk')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn-small" onclick="retrainModel('risk')">
+                                <i class="fas fa-sync"></i> Retrain
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="model-card">
+                        <div class="model-header">
+                            <h3>Community Health Monitor</h3>
+                            <span class="model-status training">Training</span>
+                        </div>
+                        <div class="model-metrics">
+                            <div class="metric">
+                                <span class="metric-label">MAPE</span>
+                                <span class="metric-value">8.2%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">R² Score</span>
+                                <span class="metric-value">0.87</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">MAE</span>
+                                <span class="metric-value">12.3</span>
+                            </div>
+                        </div>
+                        <div class="model-actions">
+                            <button class="btn-small" onclick="viewModelDetails('community')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn-small disabled" disabled>
+                                <i class="fas fa-spinner fa-spin"></i> Training
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="model-performance">
+                    <h3>Model Performance Over Time</h3>
+                    <div class="performance-chart">
+                        <canvas id="modelPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Data Section -->
+            <section id="data" class="dashboard-section" style="display: none;">
+                <div class="section-header">
+                    <h2><i class="fas fa-database"></i> Research Data Management</h2>
+                    <div class="section-actions">
+                        <button class="btn-primary" onclick="backupData()">
+                            <i class="fas fa-save"></i> Backup Data
+                        </button>
+                        <button class="btn-secondary" onclick="cleanData()">
+                            <i class="fas fa-broom"></i> Clean Data
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="data-stats">
+                    <div class="data-stat">
+                        <h4>Total Data Points</h4>
+                        <h2 id="total-data-points">152,847</h2>
+                        <p>Nutrition logs, health metrics, surveys</p>
+                    </div>
+                    <div class="data-stat">
+                        <h4>Data Quality Score</h4>
+                        <h2 id="data-quality">96.5%</h2>
+                        <p>Completeness & accuracy</p>
+                    </div>
+                    <div class="data-stat">
+                        <h4>Storage Used</h4>
+                        <h2 id="storage-used">2.8 GB</h2>
+                        <p>Database & backups</p>
+                    </div>
+                    <div class="data-stat">
+                        <h4>Last Backup</h4>
+                        <h2 id="last-backup">6 hours</h2>
+                        <p>Time since last backup</p>
+                    </div>
+                </div>
+                
+                <div class="data-tables">
+                    <div class="data-table">
+                        <h3>Recent Data Entries</h3>
+                        <div class="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Data Type</th>
+                                        <th>Participant ID</th>
+                                        <th>Value</th>
+                                        <th>Quality</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-data">
+                                    <!-- Data loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="data-table">
+                        <h3>Data Quality Issues</h3>
+                        <div class="table-scroll">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Issue Type</th>
+                                        <th>Count</th>
+                                        <th>Severity</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="data-issues">
+                                    <!-- Issues loaded dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Footer -->
+            <footer class="admin-footer">
+                <p>NutriAI Research Admin Panel v1.0.0 | PhD Research Project</p>
+                <p>Data last synchronized: <span id="sync-time">Loading...</span></p>
+            </footer>
+        </main>
+    </div>
+    
+    <!-- Modals -->
+    <div id="participantModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Research Participant</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="participantForm">
+                    <div class="form-group">
+                        <label>Participant ID</label>
+                        <input type="text" id="participantId" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Age Group</label>
+                            <select id="ageGroup" required>
+                                <option value="18-25">18-25</option>
+                                <option value="26-35">26-35</option>
+                                <option value="36-50">36-50</option>
+                                <option value="51-65">51-65</option>
+                                <option value="65+">65+</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <select id="gender" required>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                                <option value="prefer-not-to-say">Prefer not to say</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Region</label>
+                        <select id="region" required>
+                            <option value="north">North</option>
+                            <option value="south">South</option>
+                            <option value="east">East</option>
+                            <option value="west">West</option>
+                            <option value="urban">Urban</option>
+                            <option value="rural">Rural</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Initial Health Metrics</label>
+                        <div class="form-row">
+                            <input type="number" placeholder="Weight (kg)" id="weight">
+                            <input type="number" placeholder="Height (cm)" id="height">
+                            <input type="number" placeholder="Age" id="age">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Consent Status</label>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="consentResearch" checked>
+                                <span>Consent for research participation</span>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="consentData" checked>
+                                <span>Consent for data collection</span>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="consentContact" checked>
+                                <span>Consent for follow-up contact</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveParticipant()">Save Participant</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="admin.js"></script>
+</body>
+</html>
